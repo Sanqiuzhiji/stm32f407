@@ -3,6 +3,8 @@
 #include <retarget.h>
 #include <string.h>
 #include "usart.h"
+#include <stdarg.h>
+#include <stdio.h>
 
 #if !defined(OS_USE_SEMIHOSTING)
 
@@ -10,9 +12,9 @@
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
 
-UART_HandleTypeDef *gHuart;
+UART_HandleTypeDef* gHuart;
 
-void RetargetInit(UART_HandleTypeDef *huart)
+void RetargetInit(UART_HandleTypeDef* huart)
 {
     gHuart = huart;
     /* Disable I/O buffering for STDOUT stream, so that
@@ -29,15 +31,14 @@ int _isatty(const int fd)
     return 0;
 }
 
-int _write(const int fd, const char *ptr, const int len)
+int _write(const int fd, const char* ptr, const int len)
 {
     if (fd == STDOUT_FILENO || fd == STDERR_FILENO)
     {
-        // ToDo: Change this to DMA version
-        HAL_UART_Transmit(gHuart, (uint8_t *) ptr, len, HAL_MAX_DELAY);
+        HAL_UART_Transmit(gHuart, (uint8_t*)ptr, len, HAL_MAX_DELAY);
         return len;
-    } else
-        return -1;
+    }
+    return -1;
 }
 
 
@@ -52,15 +53,15 @@ int _close(const int fd)
 
 int _lseek(const int fd, const int ptr, const int dir)
 {
-    (void) fd;
-    (void) ptr;
-    (void) dir;
+    (void)fd;
+    (void)ptr;
+    (void)dir;
 
     errno = EBADF;
     return -1;
 }
 
-int _read(const int fd, char *ptr, int len)
+int _read(const int fd, char* ptr, int len)
 {
     if (fd == STDIN_FILENO)
     {
@@ -73,7 +74,7 @@ int _read(const int fd, char *ptr, int len)
     return -1;
 }
 
-int _fstat(const int fd, struct stat *st)
+int _fstat(const int fd, struct stat* st)
 {
     if (fd >= STDIN_FILENO && fd <= STDERR_FILENO)
     {
@@ -90,11 +91,24 @@ void Serial_SendByte(const uint8_t Byte)
     HAL_UART_Transmit(gHuart, &Byte, sizeof(Byte), HAL_MAX_DELAY);
 }
 
-void Serial_SendArray(const uint8_t *Array, const uint8_t Array_length)
+void Serial_SendArray(const uint8_t* Array, const uint8_t Array_length)
 {
     HAL_UART_Transmit(gHuart, Array, Array_length, HAL_MAX_DELAY);
 }
 
+unsigned char TxBuf_DMA[128];
+
+void printf_DMA(const char* format, ...)
+{
+    if (gHuart->hdmatx->State == HAL_DMA_STATE_READY)
+    {
+        //传输完成，在此开启下一次传输
+        va_list args;
+        va_start(args, format);
+        const uint16_t len = vsnprintf((char*)TxBuf_DMA, sizeof(TxBuf_DMA) + 1, (char*)format, args);
+        va_end(args);
+        HAL_UART_Transmit_DMA(gHuart, TxBuf_DMA, len);
+    }
+}
+
 #endif //#if !defined(OS_USE_SEMIHOSTING)
-
-

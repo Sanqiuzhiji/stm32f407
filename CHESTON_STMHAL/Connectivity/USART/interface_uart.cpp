@@ -15,7 +15,7 @@ uint8_t result_u8 = 0;
 
 void OnUartCmd(uint8_t* _data, uint16_t _len)
 {
-    printf("%.*s\r\n", _len, reinterpret_cast<const char*>(_data));
+    printf_DMA("%.*s\r\n", _len, reinterpret_cast<const char*>(_data));
     if (sscanf(reinterpret_cast<char*>(_data), "led %d", &result_u8) < 1)
         printf("Command format error\r\n");
     else

@@ -8,6 +8,7 @@
 void RetargetInit(UART_HandleTypeDef *huart);
 void Serial_SendByte(uint8_t Byte);
 void Serial_SendArray(const uint8_t *Array,uint8_t Array_length);
+void printf_DMA(const char *format,...);
 
 int _isatty(int fd);
 
