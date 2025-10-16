@@ -215,6 +215,7 @@ void TIM7_IRQHandler(void)
 {
     /* USER CODE BEGIN TIM7_IRQn 0 */
     // 检查是否为 TIM7 更新事件
+
     if (__HAL_TIM_GET_FLAG(&htim7, TIM_FLAG_UPDATE) != RESET)
     {
         if (__HAL_TIM_GET_IT_SOURCE(&htim7, TIM_IT_UPDATE) != RESET)

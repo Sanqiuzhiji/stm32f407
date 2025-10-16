@@ -14,10 +14,13 @@ extern "C" {
 #include "FreeRTOS.h"
 #include "task.h"
 #include "tim.h"
+#include <rtc.h>
 
 void Main_Setup();
 void OnUartCmd(uint8_t* _data, uint16_t _len);
+void Start_Task_Main(void* argument);
 void TIM7_IQR_1MS_Handler();
+
 #ifdef __cplusplus
 }
 
@@ -30,6 +33,7 @@ void TIM7_IQR_1MS_Handler();
 
 #include "interface_uart.h"
 #include "LedController.h"
+#include "ButtonController.h"
 
 #endif
 

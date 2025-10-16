@@ -15,7 +15,7 @@
 // 高级 LED 控制类（逻辑层）
 // 支持非阻塞闪烁与呼吸灯效果
 // =============================
-#pragma once
+
 #include "main.h"
 #include <cmath>
 
