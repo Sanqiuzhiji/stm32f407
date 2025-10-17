@@ -43,7 +43,7 @@ public:
 
     void UpdateButtonState();
 
-    void UpdateButtonType(uint16_t period_ms);
+    void UpdateButtonType();
 
     BUTTON_TYPE button_type = BUTTON_TYPE::NONE;
     uint8_t continue_click_counter = 0;

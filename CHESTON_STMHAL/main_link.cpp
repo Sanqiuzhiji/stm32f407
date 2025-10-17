@@ -38,8 +38,16 @@ extern "C" void Start_Task_Main(void* argument)
     }
 }
 
+extern "C" void Start_Task_TimerIRQ(void* argument)
+{
+    for (;;)
+    {
+        vTaskDelay(10);
+    }
+}
+
 extern "C" void TIM7_IQR_1MS_Handler()
 {
     ledManager.UpdateAll(0);
-    button_down.UpdateButtonType(1);
+    button_down.UpdateButtonType();
 }

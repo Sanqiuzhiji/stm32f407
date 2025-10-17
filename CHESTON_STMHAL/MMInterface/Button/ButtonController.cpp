@@ -41,7 +41,7 @@ void ButtonController::UpdateButtonState()
     // printf("button_state:%d\r\n", button_state);
 }
 
-void ButtonController::UpdateButtonType(uint16_t period_ms)
+void ButtonController::UpdateButtonType()
 {
     pre_button_state = button_state;
     UpdateButtonState();
@@ -53,7 +53,7 @@ void ButtonController::UpdateButtonType(uint16_t period_ms)
         button_action = BUTTON_ACTION::RELEASE_BUTTON;
     if (button_action == BUTTON_ACTION::PRESS_BUTTON)
     {
-        high_time_counter += period_ms; //自增计时器
+        high_time_counter++; //自增计时器
         if (high_time_counter == long_press_high_ms)
             printf("long press time is arrived\r\n");
         if (is_continue_clicking)
@@ -75,7 +75,7 @@ void ButtonController::UpdateButtonType(uint16_t period_ms)
             printf("long press button\r\n");
             return;
         }
-        low_time_counter += period_ms;
+        low_time_counter++;
         // printf("low_time_counter:%d\r\n", low_time_counter);
         if (low_time_counter > continue_click_low_ms && continue_click_counter == 0) //如果低电平持续时间过高，则判定为单次点击
         {

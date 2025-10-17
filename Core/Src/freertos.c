@@ -61,6 +61,18 @@ const osThreadAttr_t Task_Main_attributes = {
   .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for Task_TimerIRQ */
+osThreadId_t Task_TimerIRQHandle;
+const osThreadAttr_t Task_TimerIRQ_attributes = {
+  .name = "Task_TimerIRQ",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for Queue_Button */
+osMessageQueueId_t Queue_ButtonHandle;
+const osMessageQueueAttr_t Queue_Button_attributes = {
+  .name = "Queue_Button"
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -69,6 +81,7 @@ const osThreadAttr_t Task_Main_attributes = {
 
 void StartDefaultTask(void *argument);
 extern void Start_Task_Main(void *argument);
+extern void Start_Task_TimerIRQ(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -83,19 +96,23 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
-  /* add mutexes, ... */
+    /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
-  /* add semaphores, ... */
+    /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
-  /* start timers, add new ones, ... */
+    /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
+  /* Create the queue(s) */
+  /* creation of Queue_Button */
+  Queue_ButtonHandle = osMessageQueueNew (16, sizeof(uint16_t), &Queue_Button_attributes);
+
   /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
+    /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -105,12 +122,15 @@ void MX_FREERTOS_Init(void) {
   /* creation of Task_Main */
   Task_MainHandle = osThreadNew(Start_Task_Main, NULL, &Task_Main_attributes);
 
+  /* creation of Task_TimerIRQ */
+  Task_TimerIRQHandle = osThreadNew(Start_Task_TimerIRQ, NULL, &Task_TimerIRQ_attributes);
+
   /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
+    /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
-  /* add events, ... */
+    /* add events, ... */
   /* USER CODE END RTOS_EVENTS */
 
 }
@@ -125,11 +145,11 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+    /* Infinite loop */
+    for (;;)
+    {
+        osDelay(1);
+    }
   /* USER CODE END StartDefaultTask */
 }
 
