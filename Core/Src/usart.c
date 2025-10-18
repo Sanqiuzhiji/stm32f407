@@ -23,6 +23,7 @@
 /* USER CODE BEGIN 0 */
 
 #include "main_link.h"
+#include "retarget.h"
 
 volatile uint8_t rxLen = 0;
 uint8_t rx_buffer[BUFFER_SIZE] = {0};
