@@ -19,6 +19,7 @@
 #include "handle.h"
 #include "interface_uart.h"
 #include "Button_Controller.h"
+#include "Led_Controller.h"
 
 // RTC_DateTypeDef GetData;    //获取日期结构体
 // RTC_TimeTypeDef GetTime;    //获取时间结构体
@@ -31,11 +32,28 @@
 button_send_data_t common_receive_data = {BUTTON_TYPE_NONE, 0};
 button_controller_t button_up;
 
+led_controller_t led0;
+led_controller_t led1;
+led_manager_t led_manager;
+
 void Main_Setup() //延时使用HAL_Delay
 {
     UART_Interrupt_Init();
     HAL_TIM_Base_Start_IT(&htim7);
     button_controller_init(&button_up, KEY_UP_GPIO_Port, KEY_UP_Pin, true);
+
+    // 初始化LED控制器
+    led_controller_init(&led0, LED0_GPIO_Port, LED0_Pin, false);
+    led_controller_init(&led1, LED1_GPIO_Port, LED1_Pin, false);
+
+    // 设置LED模式
+    led0.set_blink(&led0, 500, 500, true); // 500ms闪烁
+    led1.set_blink(&led1, 500, 500, false); // 500ms闪烁
+
+    // 初始化管理器并添加LED
+    led_manager_init(&led_manager);
+    led_manager_add(&led_manager, &led0);
+    led_manager_add(&led_manager, &led1);
 }
 
 void Start_Task_Main(void* argument)
@@ -77,4 +95,5 @@ void Start_Task_TimerIRQ(void* argument)
 void TIM7_IQR_1MS_Handler()
 {
     button_up.update_type(&button_up);
+    led_manager_update_all(&led_manager, 1);
 }
