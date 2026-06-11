@@ -73,7 +73,7 @@ void Start_Task_TimerIRQ(void* argument)
             if (common_receive_data.button_type == BUTTON_TYPE_CLICK_BUTTON)
             {
                 printf("click button\r\n");
-                HAL_GPIO_WritePin(LED0_GPIO_Port, LED0_Pin, GPIO_PIN_RESET);
+                HAL_GPIO_TogglePin(LED0_GPIO_Port, LED0_Pin);
             }
             else if (common_receive_data.button_type == BUTTON_TYPE_LONG_PRESS_BUTTON)
             {
@@ -95,5 +95,5 @@ void Start_Task_TimerIRQ(void* argument)
 void TIM7_IQR_1MS_Handler()
 {
     button_up.update_type(&button_up);
-    led_manager_update_all(&led_manager, 1);
+    // led_manager_update_all(&led_manager, 1);
 }
