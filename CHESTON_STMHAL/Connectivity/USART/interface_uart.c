@@ -4,6 +4,7 @@
 #include "retarget.h"
 #include "stdio.h"
 #include "usart.h"
+#include "App/PlotTest/plot_test.h"
 
 uint8_t uart1_rx_data = 0;
 uint8_t result_u8 = 0;
@@ -19,6 +20,11 @@ uint8_t result_u8 = 0;
 
 void OnUartCmd(uint8_t* _data, uint16_t _len)
 {
+    if (PlotTest_HandleCommand(_data, _len))
+    {
+        return;
+    }
+
     printf_DMA("%.*s\r\n", _len, (const char*)(_data));
     if (sscanf((const char*)(_data), "led %d", &result_u8) < 1)
         printf("Command format error\r\n");

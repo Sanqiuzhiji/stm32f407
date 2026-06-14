@@ -3,7 +3,6 @@
 //
 #include "main_link.h"
 
-//标准头文件-stm32头文件
 #include "stdio.h"
 #include "stdint-gcc.h"
 #include "main.h"
@@ -15,52 +14,61 @@
 #include "tim.h"
 #include "rtc.h"
 
-//用户头文件
 #include "handle.h"
+#include "App/PlotTest/plot_test.h"
 #include "interface_uart.h"
 #include "Button_Controller.h"
 #include "Led_Controller.h"
 
-// RTC_DateTypeDef GetData;    //获取日期结构体
-// RTC_TimeTypeDef GetTime;    //获取时间结构体
-// HAL_RTC_GetTime(&hrtc, &GetTime, RTC_FORMAT_BIN);
-// HAL_RTC_GetDate(&hrtc, &GetData, RTC_FORMAT_BIN);
-//
-// printf("%02d/%02d/%02d\r\n",2000 + GetData.Year, GetData.Month, GetData.Date);
-// printf("%02d:%02d:%02d\r\n",GetTime.Hours, GetTime.Minutes, GetTime.Seconds);
+#define BUTTON_COUNT 4
 
-button_send_data_t common_receive_data = {BUTTON_TYPE_NONE, 0};
-button_controller_t button_up;
+static const char* Button_GetName(button_id_e button_id);
+static void Button_SendEventFromISR(const button_send_data_t* event);
+
+button_send_data_t common_receive_data = {BUTTON_ID_UNKNOWN, BUTTON_TYPE_NONE, 0};
+button_controller_t buttons[BUTTON_COUNT];
 
 led_controller_t led0;
 led_controller_t led1;
 led_manager_t led_manager;
 
-void Main_Setup() //延时使用HAL_Delay
+void Main_Setup()
 {
-    UART_Interrupt_Init();
-    HAL_TIM_Base_Start_IT(&htim7);
-    button_controller_init(&button_up, KEY_UP_GPIO_Port, KEY_UP_Pin, true);
+    plot_test_config_t plot_config = {
+        .send = PlotTest_UartDmaSend,
+        .user = &huart1,
+        .channel_count = PLOT_TEST_DEFAULT_CHANNELS,
+        .interval_ms = PLOT_TEST_DEFAULT_INTERVAL_MS,
+        .auto_start = true,
+    };
 
-    // 初始化LED控制器
+    UART_Interrupt_Init();
+    PlotTest_Init(&plot_config);
+
+    button_controller_init(&buttons[0], BUTTON_ID_UP, KEY_UP_GPIO_Port, KEY_UP_Pin, true);
+    button_controller_init(&buttons[1], BUTTON_ID_LEFT, KEY_LEFT_GPIO_Port, KEY_LEFT_Pin, false);
+    button_controller_init(&buttons[2], BUTTON_ID_DOWN, KEY_DOWN_GPIO_Port, KEY_DOWN_Pin, false);
+    button_controller_init(&buttons[3], BUTTON_ID_RIGHT, KEY_RIGHT_GPIO_Port, KEY_RIGHT_Pin, false);
+
     led_controller_init(&led0, LED0_GPIO_Port, LED0_Pin, false);
     led_controller_init(&led1, LED1_GPIO_Port, LED1_Pin, false);
 
-    // 设置LED模式
-    led0.set_blink(&led0, 500, 500, true); // 500ms闪烁
-    led1.set_blink(&led1, 500, 500, false); // 500ms闪烁
+    led0.set_blink(&led0, 500, 500, true);
+    led1.set_blink(&led1, 500, 500, false);
 
-    // 初始化管理器并添加LED
     led_manager_init(&led_manager);
     led_manager_add(&led_manager, &led0);
     led_manager_add(&led_manager, &led1);
+
+    HAL_TIM_Base_Start_IT(&htim7);
 }
 
 void Start_Task_Main(void* argument)
 {
     for (;;)
     {
-        vTaskDelay(10);
+        PlotTest_TaskTick(HAL_GetTick());
+        vTaskDelay(pdMS_TO_TICKS(1));
     }
 }
 
@@ -70,22 +78,24 @@ void Start_Task_TimerIRQ(void* argument)
     {
         if (xQueueReceive(Queue_ButtonHandle, &common_receive_data, 5) == pdTRUE)
         {
+            const char* button_name = Button_GetName(common_receive_data.button_id);
+
             if (common_receive_data.button_type == BUTTON_TYPE_CLICK_BUTTON)
             {
-                printf("click button\r\n");
+                printf("%s click button\r\n", button_name);
                 HAL_GPIO_TogglePin(LED0_GPIO_Port, LED0_Pin);
             }
             else if (common_receive_data.button_type == BUTTON_TYPE_LONG_PRESS_BUTTON)
             {
-                printf("long button\r\n");
+                printf("%s long button\r\n", button_name);
             }
             else if (common_receive_data.button_type == BUTTON_TYPE_DOUBLE_CLICK_BUTTON)
             {
-                printf("double button\r\n");
+                printf("%s double button\r\n", button_name);
             }
-            else if (common_receive_data.button_type == BUTTON_TYPE_CONTINUE_CLICK_BUTTON)
+            else if (common_receive_data.button_type == BUTTON_TYPE_MULTI_CLICK_BUTTON)
             {
-                printf("continue button: %d\r\n", common_receive_data.button_click_count);
+                printf("%s multi click button: %d\r\n", button_name, common_receive_data.button_click_count);
             }
         }
         vTaskDelay(10);
@@ -94,6 +104,43 @@ void Start_Task_TimerIRQ(void* argument)
 
 void TIM7_IQR_1MS_Handler()
 {
-    button_up.update_type(&button_up);
+    button_send_data_t event = {BUTTON_ID_UNKNOWN, BUTTON_TYPE_NONE, 0};
+
+    for (uint8_t i = 0; i < BUTTON_COUNT; i++)
+    {
+        if (buttons[i].update_type(&buttons[i], &event))
+        {
+            Button_SendEventFromISR(&event);
+        }
+    }
     // led_manager_update_all(&led_manager, 1);
+}
+
+static const char* Button_GetName(button_id_e button_id)
+{
+    switch (button_id)
+    {
+    case BUTTON_ID_UP:
+        return "UP";
+    case BUTTON_ID_LEFT:
+        return "LEFT";
+    case BUTTON_ID_DOWN:
+        return "DOWN";
+    case BUTTON_ID_RIGHT:
+        return "RIGHT";
+    default:
+        return "UNKNOWN";
+    }
+}
+
+static void Button_SendEventFromISR(const button_send_data_t* event)
+{
+    if (Queue_ButtonHandle == NULL || event == NULL || event->button_type == BUTTON_TYPE_NONE)
+    {
+        return;
+    }
+
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xQueueSendToBackFromISR(Queue_ButtonHandle, event, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }

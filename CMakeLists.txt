@@ -63,7 +63,7 @@ CHESTON_STMHAL/Peripheral/Algorithm
 )
 add_definitions(-DDEBUG -DUSE_HAL_DRIVER -DSTM32F407xx)
 
-file(GLOB_RECURSE SOURCES "Core/*.*" "Middlewares/*.*" "Drivers/*.*" "CHESTON_STMHAL/*.*")
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "Core/*.*" "Middlewares/*.*" "Drivers/*.*" "CHESTON_STMHAL/*.*")
 
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/STM32F407ZGTX_FLASH.ld)
 
