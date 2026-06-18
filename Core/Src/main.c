@@ -25,6 +25,7 @@
 #include "usart.h"
 #include "usb_device.h"
 #include "gpio.h"
+#include "fsmc.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -102,6 +103,7 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM7_Init();
   MX_RTC_Init();
+  MX_FSMC_Init();
   /* USER CODE BEGIN 2 */
 
     Main_Setup();

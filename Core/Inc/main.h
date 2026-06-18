@@ -65,12 +65,24 @@ uint32_t getSystemTimeMs();
 #define KEY_DOWN_GPIO_Port GPIOE
 #define KEY_RIGHT_Pin GPIO_PIN_4
 #define KEY_RIGHT_GPIO_Port GPIOE
+#define TOUCH_RST_Pin GPIO_PIN_13
+#define TOUCH_RST_GPIO_Port GPIOC
 #define LED0_Pin GPIO_PIN_9
 #define LED0_GPIO_Port GPIOF
 #define LED1_Pin GPIO_PIN_10
 #define LED1_GPIO_Port GPIOF
 #define KEY_UP_Pin GPIO_PIN_0
 #define KEY_UP_GPIO_Port GPIOA
+#define TOUCH_SCL_Pin GPIO_PIN_0
+#define TOUCH_SCL_GPIO_Port GPIOB
+#define TOUCH_INT_Pin GPIO_PIN_1
+#define TOUCH_INT_GPIO_Port GPIOB
+#define TOUCH_MISO_Pin GPIO_PIN_2
+#define TOUCH_MISO_GPIO_Port GPIOB
+#define TOUCH_SDA_Pin GPIO_PIN_11
+#define TOUCH_SDA_GPIO_Port GPIOF
+#define LCD_BL_Pin GPIO_PIN_15
+#define LCD_BL_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

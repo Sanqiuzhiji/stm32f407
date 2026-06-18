@@ -20,6 +20,9 @@
 #include "USB/interface_usb.h"
 #include "Button_Controller.h"
 #include "Led_Controller.h"
+#include "LCD/tft_lcd.h"
+#include "Touch/touch_screen.h"
+#include "Touch/touch_calibration.h"
 
 #define BUTTON_COUNT 4
 
@@ -48,6 +51,16 @@ void Main_Setup()
     UART_Interrupt_Init();
     PlotTest_Init(&plot_config);
 
+    (void)TftLcd_Init();
+
+    touch_screen_config_t touch_config;
+    TouchScreen_GetDefaultConfig(&touch_config);
+    touch_config.mode = TOUCH_SCREEN_MODE_RESISTIVE;
+    touch_config.width = TftLcd_GetWidth();
+    touch_config.height = TftLcd_GetHeight();
+    (void)TouchScreen_Init(&touch_config);
+    (void)TouchCalibration_RunBlocking();
+
     button_controller_init(&buttons[0], BUTTON_ID_UP, KEY_UP_GPIO_Port, KEY_UP_Pin, true);
     button_controller_init(&buttons[1], BUTTON_ID_LEFT, KEY_LEFT_GPIO_Port, KEY_LEFT_Pin, false);
     button_controller_init(&buttons[2], BUTTON_ID_DOWN, KEY_DOWN_GPIO_Port, KEY_DOWN_Pin, false);
@@ -68,10 +81,21 @@ void Main_Setup()
 
 void Start_Task_Main(void* argument)
 {
+    touch_screen_state_t touch_state;
+
     for (;;)
     {
         InterfaceUsb_TaskTick();
         PlotTest_TaskTick(HAL_GetTick());
+
+        if (TouchScreen_Scan(&touch_state) && touch_state.pressed)
+        {
+            TftLcd_DrawPixel(touch_state.x[0], touch_state.y[0], TFT_LCD_COLOR_RED);
+            TftLcd_DrawPixel((uint16_t)(touch_state.x[0] + 1U), touch_state.y[0], TFT_LCD_COLOR_RED);
+            TftLcd_DrawPixel(touch_state.x[0], (uint16_t)(touch_state.y[0] + 1U), TFT_LCD_COLOR_RED);
+            TftLcd_DrawPixel((uint16_t)(touch_state.x[0] + 1U), (uint16_t)(touch_state.y[0] + 1U), TFT_LCD_COLOR_RED);
+        }
+
         vTaskDelay(pdMS_TO_TICKS(1));
     }
 }

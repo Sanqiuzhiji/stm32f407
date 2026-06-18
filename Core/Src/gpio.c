@@ -38,7 +38,6 @@
         * Output
         * EVENT_OUT
         * EXTI
-     PD15   ------> FSMC_D1_DA1
 */
 void MX_GPIO_Init(void)
 {
@@ -51,16 +50,31 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOG_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOF, LED0_Pin|LED1_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(TOUCH_RST_GPIO_Port, TOUCH_RST_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOF, LED0_Pin|LED1_Pin|TOUCH_SDA_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, TOUCH_SCL_Pin|LCD_BL_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pins : KEY_LEFT_Pin KEY_DOWN_Pin KEY_RIGHT_Pin */
   GPIO_InitStruct.Pin = KEY_LEFT_Pin|KEY_DOWN_Pin|KEY_RIGHT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : TOUCH_RST_Pin */
+  GPIO_InitStruct.Pin = TOUCH_RST_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(TOUCH_RST_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LED0_Pin LED1_Pin */
   GPIO_InitStruct.Pin = LED0_Pin|LED1_Pin;
@@ -75,13 +89,32 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(KEY_UP_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PD15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_15;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  /*Configure GPIO pin : TOUCH_SCL_Pin */
+  GPIO_InitStruct.Pin = TOUCH_SCL_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(TOUCH_SCL_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : TOUCH_INT_Pin TOUCH_MISO_Pin */
+  GPIO_InitStruct.Pin = TOUCH_INT_Pin|TOUCH_MISO_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : TOUCH_SDA_Pin */
+  GPIO_InitStruct.Pin = TOUCH_SDA_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(TOUCH_SDA_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : LCD_BL_Pin */
+  GPIO_InitStruct.Pin = LCD_BL_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF12_FSMC;
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(LCD_BL_GPIO_Port, &GPIO_InitStruct);
 
 }
 
