@@ -17,6 +17,7 @@
 #include "handle.h"
 #include "App/PlotTest/plot_test.h"
 #include "interface_uart.h"
+#include "USB/interface_usb.h"
 #include "Button_Controller.h"
 #include "Led_Controller.h"
 
@@ -35,13 +36,15 @@ led_manager_t led_manager;
 void Main_Setup()
 {
     plot_test_config_t plot_config = {
-        .send = PlotTest_UartDmaSend,
-        .user = &huart1,
+        .send = InterfaceUsb_CdcSend,
+        .user = NULL,
         .channel_count = PLOT_TEST_DEFAULT_CHANNELS,
         .interval_ms = PLOT_TEST_DEFAULT_INTERVAL_MS,
         .auto_start = true,
     };
 
+    InterfaceUsb_Init();
+    InterfaceUsb_SetRxCpltCallBack(OnUartCmd);
     UART_Interrupt_Init();
     PlotTest_Init(&plot_config);
 
@@ -67,6 +70,7 @@ void Start_Task_Main(void* argument)
 {
     for (;;)
     {
+        InterfaceUsb_TaskTick();
         PlotTest_TaskTick(HAL_GetTick());
         vTaskDelay(pdMS_TO_TICKS(1));
     }
