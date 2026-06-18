@@ -11,11 +11,11 @@ uint8_t result_u8 = 0;
 
 /*
  * 功能描述: 串口命令处理函数
- float result = 0.0f;
-    if (sscanf((char*)_data, "v %f", &result) < 1)
-        printf("[v] Command format error\r\n");
-    else
-        功能代码;
+float result = 0.0f;
+if (sscanf((char*)_data, "v %f", &result) < 1)
+    printf("[v] Command format error\r\n");
+else
+    功能代码;
  */
 
 void OnUartCmd(uint8_t* _data, uint16_t _len)
