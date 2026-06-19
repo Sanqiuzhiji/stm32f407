@@ -45,17 +45,17 @@ bool TouchCalibration_RunBlocking(void)
 
         if (!wait_raw_touch(&raw[i].x, &raw[i].y))
         {
-            printf("Touch calibration timeout at point %u\r\n", (unsigned)(i + 1U));
+            // printf("Touch calibration timeout at point %u\r\n", (unsigned)(i + 1U));
             TftLcd_Clear(TFT_LCD_COLOR_WHITE);
             return false;
         }
 
-        printf("Touch cal p%u: raw=(%u,%u) target=(%u,%u)\r\n",
-               (unsigned)(i + 1U),
-               raw[i].x,
-               raw[i].y,
-               target[i].x,
-               target[i].y);
+        // printf("Touch cal p%u: raw=(%u,%u) target=(%u,%u)\r\n",
+        //        (unsigned)(i + 1U),
+        //        raw[i].x,
+        //        raw[i].y,
+        //        target[i].x,
+        //        target[i].y);
 
         draw_cross(target[i].x, target[i].y, TFT_LCD_COLOR_GREEN);
         wait_release();
@@ -70,21 +70,21 @@ bool TouchCalibration_RunBlocking(void)
 
     if (!build_config(raw, &config))
     {
-        printf("Touch calibration failed: invalid raw point geometry\r\n");
+        // printf("Touch calibration failed: invalid raw point geometry\r\n");
         TftLcd_Clear(TFT_LCD_COLOR_WHITE);
         draw_cross(TFT_LCD_WIDTH / 2U, TFT_LCD_HEIGHT / 2U, TFT_LCD_COLOR_RED);
         return false;
     }
 
     (void)TouchScreen_Init(&config);
-    printf("Touch calibration OK: swap=%u invx=%u invy=%u xmin=%u xmax=%u ymin=%u ymax=%u\r\n",
-           config.swap_xy ? 1U : 0U,
-           config.invert_x ? 1U : 0U,
-           config.invert_y ? 1U : 0U,
-           config.resistive_x_min,
-           config.resistive_x_max,
-           config.resistive_y_min,
-           config.resistive_y_max);
+    // printf("Touch calibration OK: swap=%u invx=%u invy=%u xmin=%u xmax=%u ymin=%u ymax=%u\r\n",
+    //        config.swap_xy ? 1U : 0U,
+    //        config.invert_x ? 1U : 0U,
+    //        config.invert_y ? 1U : 0U,
+    //        config.resistive_x_min,
+    //        config.resistive_x_max,
+    //        config.resistive_y_min,
+    //        config.resistive_y_max);
 
     TftLcd_Clear(TFT_LCD_COLOR_WHITE);
     return true;

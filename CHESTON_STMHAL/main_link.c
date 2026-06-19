@@ -36,6 +36,8 @@ led_controller_t led0;
 led_controller_t led1;
 led_manager_t led_manager;
 
+static bool lcd_ready = false;
+
 void Main_Setup()
 {
     plot_test_config_t plot_config = {
@@ -51,15 +53,21 @@ void Main_Setup()
     UART_Interrupt_Init();
     PlotTest_Init(&plot_config);
 
-    (void)TftLcd_Init();
-
-    touch_screen_config_t touch_config;
-    TouchScreen_GetDefaultConfig(&touch_config);
-    touch_config.mode = TOUCH_SCREEN_MODE_RESISTIVE;
-    touch_config.width = TftLcd_GetWidth();
-    touch_config.height = TftLcd_GetHeight();
-    (void)TouchScreen_Init(&touch_config);
-    (void)TouchCalibration_RunBlocking();
+    lcd_ready = TftLcd_Init();
+    if (lcd_ready)
+    {
+        touch_screen_config_t touch_config;
+        TouchScreen_GetDefaultConfig(&touch_config);
+        touch_config.mode = TOUCH_SCREEN_MODE_RESISTIVE;
+        touch_config.width = TftLcd_GetWidth();
+        touch_config.height = TftLcd_GetHeight();
+        (void)TouchScreen_Init(&touch_config);
+        (void)TouchCalibration_RunBlocking();
+    }
+    else
+    {
+        printf("LCD init failed, skip touch calibration\r\n");
+    }
 
     button_controller_init(&buttons[0], BUTTON_ID_UP, KEY_UP_GPIO_Port, KEY_UP_Pin, true);
     button_controller_init(&buttons[1], BUTTON_ID_LEFT, KEY_LEFT_GPIO_Port, KEY_LEFT_Pin, false);
@@ -88,7 +96,7 @@ void Start_Task_Main(void* argument)
         InterfaceUsb_TaskTick();
         PlotTest_TaskTick(HAL_GetTick());
 
-        if (TouchScreen_Scan(&touch_state) && touch_state.pressed)
+        if (lcd_ready && TouchScreen_Scan(&touch_state) && touch_state.pressed)
         {
             TftLcd_DrawPixel(touch_state.x[0], touch_state.y[0], TFT_LCD_COLOR_RED);
             TftLcd_DrawPixel((uint16_t)(touch_state.x[0] + 1U), touch_state.y[0], TFT_LCD_COLOR_RED);

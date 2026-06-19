@@ -5,25 +5,20 @@
 #include <stdio.h>
 
 #define TFT_LCD_FSMC_NEX 4U
-#define TFT_LCD_FSMC_AX 6U
+#define TFT_LCD_FSMC_RS_AX 6U
 #define TFT_LCD_FSMC_BANK_BASE (0x60000000UL + (0x04000000UL * (TFT_LCD_FSMC_NEX - 1U)))
-#define TFT_LCD_BASE (TFT_LCD_FSMC_BANK_BASE | (((1UL << TFT_LCD_FSMC_AX) * 2UL) - 2UL))
-
-typedef struct
-{
-    volatile uint16_t REG;
-    volatile uint16_t RAM;
-} tft_lcd_fsmc_t;
-
-static tft_lcd_fsmc_t* const lcd = (tft_lcd_fsmc_t*)TFT_LCD_BASE;
+#define TFT_LCD_REG_ADDR TFT_LCD_FSMC_BANK_BASE
+#define TFT_LCD_RAM_ADDR (TFT_LCD_FSMC_BANK_BASE + (1UL << (TFT_LCD_FSMC_RS_AX + 1U)))
+#define TFT_LCD_REG (*((volatile uint16_t*)TFT_LCD_REG_ADDR))
+#define TFT_LCD_RAM (*((volatile uint16_t*)TFT_LCD_RAM_ADDR))
 
 static uint16_t lcd_id = 0U;
 static bool lcd_initialized = false;
 
-static void lcd_backlight_gpio_init(void);
 static void lcd_write_cmd(uint16_t cmd);
 static void lcd_write_data(uint16_t data);
 static uint16_t lcd_read_data(void);
+static uint8_t lcd_read_u8(void);
 static uint16_t lcd_read_ili9341_id(void);
 static uint16_t lcd_detect_id(void);
 static void lcd_print_id_probe(void);
@@ -41,7 +36,7 @@ bool TftLcd_Init(void)
         return true;
     }
 
-    lcd_backlight_gpio_init();
+    TftLcd_Backlight(false);
     HAL_Delay(50U);
 
     lcd_write_cmd(0x01U);
@@ -49,22 +44,21 @@ bool TftLcd_Init(void)
 
     lcd_print_id_probe();
     lcd_id = lcd_detect_id();
-    printf("LCD ID: 0x%04X\r\n", lcd_id);
+    // printf("LCD ID: 0x%04X\r\n", lcd_id);
 
-    uint16_t controller_id = lcd_id;
-
-    if (controller_id == 0x7789U)
+    if (lcd_id == 0x7789U)
     {
         lcd_st7789_init();
     }
-    else if (controller_id == 0x9341U)
+    else if (lcd_id == 0x9341U)
     {
         lcd_ili9341_init();
     }
     else
     {
-        printf("LCD unsupported ID, fallback to ST7789 init\r\n");
-        lcd_st7789_init();
+        printf("LCD unsupported ID, init aborted\r\n");
+        TftLcd_Backlight(false);
+        return false;
     }
 
     TftLcd_Clear(TFT_LCD_COLOR_WHITE);
@@ -75,8 +69,7 @@ bool TftLcd_Init(void)
 
 void TftLcd_Backlight(bool enabled)
 {
-    HAL_GPIO_WritePin(LCD_BL_GPIO_Port, LCD_BL_Pin,
-                      enabled ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LCD_BL_GPIO_Port, LCD_BL_Pin, enabled ? GPIO_PIN_SET : GPIO_PIN_RESET);
 }
 
 void TftLcd_Clear(uint16_t color)
@@ -150,34 +143,38 @@ uint16_t TftLcd_GetHeight(void)
     return TFT_LCD_HEIGHT;
 }
 
-static void lcd_backlight_gpio_init(void)
-{
-    GPIO_InitTypeDef gpio = {0};
-
-    __HAL_RCC_GPIOB_CLK_ENABLE();
-
-    gpio.Pin = LCD_BL_Pin;
-    gpio.Mode = GPIO_MODE_OUTPUT_PP;
-    gpio.Pull = GPIO_NOPULL;
-    gpio.Speed = GPIO_SPEED_FREQ_LOW;
-    gpio.Alternate = 0U;
-    HAL_GPIO_Init(LCD_BL_GPIO_Port, &gpio);
-    TftLcd_Backlight(false);
-}
-
+/**
+    lcd_write_cmd(0xD3U)等价于：
+    *(volatile uint16_t*)0x6C000000 = 0x00D3;
+    CPU 对 0x6C000000 这个地址写数据时，FSMC 硬件会自动产生 8080 并口时序：
+    - PG12 / FSMC_NE4 拉低，选中 LCD
+    - PD5 / FSMC_NWE 产生写脉冲
+    - D0~D15 输出 0x00D3
+    - PF12 / FSMC_A6 = 0，表示这是命令
+*/
 static void lcd_write_cmd(uint16_t cmd)
 {
-    lcd->REG = cmd;
+    TFT_LCD_REG = cmd;
 }
 
+/**
+    lcd_write_data(data)等价于：
+    *(volatile uint16_t*)0x6C000080 = data;
+    此时 PF12 / FSMC_A6 = 1，LCD 就把它当作数据/参数/GRAM 写入。
+ */
 static void lcd_write_data(uint16_t data)
 {
-    lcd->RAM = data;
+    TFT_LCD_RAM = data;
 }
 
 static uint16_t lcd_read_data(void)
 {
-    return lcd->RAM;
+    return TFT_LCD_RAM;
+}
+
+static uint8_t lcd_read_u8(void)
+{
+    return (uint8_t)(lcd_read_data() & 0x00FFU);
 }
 
 static uint16_t lcd_read_ili9341_id(void)
@@ -187,8 +184,8 @@ static uint16_t lcd_read_ili9341_id(void)
     lcd_write_cmd(0xD3U);
     (void)lcd_read_data();
     (void)lcd_read_data();
-    id = (uint16_t)(lcd_read_data() << 8U);
-    id |= lcd_read_data();
+    id = (uint16_t)((uint16_t)lcd_read_u8() << 8U);
+    id |= lcd_read_u8();
     return id;
 }
 
@@ -204,8 +201,8 @@ static uint16_t lcd_detect_id(void)
     lcd_write_cmd(0x04U);
     (void)lcd_read_data();
     (void)lcd_read_data();
-    id = (uint16_t)(lcd_read_data() << 8U);
-    id |= lcd_read_data();
+    id = (uint16_t)((uint16_t)lcd_read_u8() << 8U);
+    id |= lcd_read_u8();
 
     if (id == 0x8552U)
     {
@@ -232,8 +229,8 @@ static void lcd_print_id_probe(void)
         r04[i] = lcd_read_data();
     }
 
-    printf("LCD RDDID D3: %04X %04X %04X %04X\r\n", d3[0], d3[1], d3[2], d3[3]);
-    printf("LCD RDDID 04: %04X %04X %04X %04X\r\n", r04[0], r04[1], r04[2], r04[3]);
+    // printf("LCD RDDID D3: %04X %04X %04X %04X\r\n", d3[0], d3[1], d3[2], d3[3]);
+    // printf("LCD RDDID 04: %04X %04X %04X %04X\r\n", r04[0], r04[1], r04[2], r04[3]);
 }
 
 static void lcd_ili9341_init(void)
