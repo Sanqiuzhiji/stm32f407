@@ -105,23 +105,11 @@ __weak void BSP_SD_DetectIT(void)
 __weak uint8_t BSP_SD_ReadBlocks(uint32_t *pData, uint32_t ReadAddr, uint32_t NumOfBlocks, uint32_t Timeout)
 {
   uint8_t sd_state = MSD_OK;
-  uint32_t timeout = Timeout;
 
-  __disable_irq();
   if (HAL_SD_ReadBlocks(&hsd, (uint8_t *)pData, ReadAddr, NumOfBlocks, Timeout) != HAL_OK)
   {
     sd_state = MSD_ERROR;
   }
-
-  while ((sd_state == MSD_OK) && (HAL_SD_GetCardState(&hsd) != HAL_SD_CARD_TRANSFER))
-  {
-    if (timeout-- == 0U)
-    {
-      sd_state = MSD_ERROR;
-      break;
-    }
-  }
-  __enable_irq();
 
   return sd_state;
 }
@@ -140,23 +128,11 @@ __weak uint8_t BSP_SD_ReadBlocks(uint32_t *pData, uint32_t ReadAddr, uint32_t Nu
 __weak uint8_t BSP_SD_WriteBlocks(uint32_t *pData, uint32_t WriteAddr, uint32_t NumOfBlocks, uint32_t Timeout)
 {
   uint8_t sd_state = MSD_OK;
-  uint32_t timeout = Timeout;
 
-  __disable_irq();
   if (HAL_SD_WriteBlocks(&hsd, (uint8_t *)pData, WriteAddr, NumOfBlocks, Timeout) != HAL_OK)
   {
     sd_state = MSD_ERROR;
   }
-
-  while ((sd_state == MSD_OK) && (HAL_SD_GetCardState(&hsd) != HAL_SD_CARD_TRANSFER))
-  {
-    if (timeout-- == 0U)
-    {
-      sd_state = MSD_ERROR;
-      break;
-    }
-  }
-  __enable_irq();
 
   return sd_state;
 }

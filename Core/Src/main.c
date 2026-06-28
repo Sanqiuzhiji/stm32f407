@@ -33,6 +33,7 @@
 /* USER CODE BEGIN Includes */
 
 #include "main_link.h"
+#include "Remote/remote.h"
 
 /* USER CODE END Includes */
 
@@ -108,6 +109,7 @@ int main(void)
   MX_FSMC_Init();
   MX_SDIO_SD_Init();
   MX_FATFS_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
     Main_Setup();
@@ -187,6 +189,11 @@ uint32_t getSystemTimeMs()
     return systemTimeMs;
 }
 
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
+{
+    Remote_OnInputCapture(htim);
+}
+
 /* USER CODE END 4 */
 
 /**
@@ -209,6 +216,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 1 */
     if (htim->Instance == TIM6)
         systemTimeMs++;
+    Remote_OnTimerPeriodElapsed(htim);
   /* USER CODE END Callback 1 */
 }
 

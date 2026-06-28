@@ -83,6 +83,8 @@ uint32_t getSystemTimeMs();
 #define TOUCH_SDA_GPIO_Port GPIOF
 #define LCD_BL_Pin GPIO_PIN_15
 #define LCD_BL_GPIO_Port GPIOB
+#define REMOTE_IN_Pin GPIO_PIN_8
+#define REMOTE_IN_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 

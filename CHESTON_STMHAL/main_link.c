@@ -16,12 +16,14 @@
 
 #include "handle.h"
 #include "App/PlotTest/plot_test.h"
+#include "App/RemoteTest/remote_test.h"
 #include "interface_uart.h"
 #include "USB/interface_usb.h"
 #include "App/SdImageViewer/sd_image_viewer.h"
 #include "Button_Controller.h"
 #include "Led_Controller.h"
 #include "LCD/tft_lcd.h"
+#include "Remote/remote.h"
 #include "Touch/touch_screen.h"
 #include "Touch/touch_calibration.h"
 
@@ -72,6 +74,13 @@ void Main_Setup()//延迟使用 HAL_Delay
         printf("LCD init failed, skip touch calibration\r\n");
     }
 
+
+    if (!Remote_Init(&htim1, TIM_CHANNEL_1))
+    {
+        printf("Remote init failed\r\n");
+    }
+    RemoteTest_Init(lcd_ready);
+
     button_controller_init(&buttons[0], BUTTON_ID_UP, KEY_UP_GPIO_Port, KEY_UP_Pin, true);
     button_controller_init(&buttons[1], BUTTON_ID_LEFT, KEY_LEFT_GPIO_Port, KEY_LEFT_Pin, false);
     button_controller_init(&buttons[2], BUTTON_ID_DOWN, KEY_DOWN_GPIO_Port, KEY_DOWN_Pin, false);
@@ -91,9 +100,10 @@ void Main_Setup()//延迟使用 HAL_Delay
 }
 
 void Start_Task_Main(void* argument)
-{    touch_screen_state_t touch_state;
+{
+    touch_screen_state_t touch_state;
 
-    if (lcd_ready)
+    if (lcd_ready && !RemoteTest_IsActive())
     {
         (void)SdImageViewer_Init();
     }
@@ -102,10 +112,16 @@ void Start_Task_Main(void* argument)
     {
         InterfaceUsb_TaskTick();
         PlotTest_TaskTick(HAL_GetTick());
-        ImageViewer_PollNavButtons();
-        SdImageViewer_TaskTick();
+        RemoteTest_TaskTick();
 
-        if (lcd_ready && !SdImageViewer_IsActive() && TouchScreen_Scan(&touch_state) && touch_state.pressed)
+        if (!RemoteTest_IsActive())
+        {
+            ImageViewer_PollNavButtons();
+            SdImageViewer_TaskTick();
+        }
+
+        if (lcd_ready && !RemoteTest_IsActive() && !SdImageViewer_IsActive() &&
+            TouchScreen_Scan(&touch_state) && touch_state.pressed)
         {
             TftLcd_DrawPixel(touch_state.x[0], touch_state.y[0], TFT_LCD_COLOR_RED);
             TftLcd_DrawPixel((uint16_t)(touch_state.x[0] + 1U), touch_state.y[0], TFT_LCD_COLOR_RED);
