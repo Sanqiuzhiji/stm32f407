@@ -18,6 +18,7 @@
 #include "App/PlotTest/plot_test.h"
 #include "interface_uart.h"
 #include "USB/interface_usb.h"
+#include "App/SdImageViewer/sd_image_viewer.h"
 #include "Button_Controller.h"
 #include "Led_Controller.h"
 #include "LCD/tft_lcd.h"
@@ -28,6 +29,7 @@
 
 static const char* Button_GetName(button_id_e button_id);
 static void Button_SendEventFromISR(const button_send_data_t* event);
+static void ImageViewer_PollNavButtons(void);
 
 button_send_data_t common_receive_data = {BUTTON_ID_UNKNOWN, BUTTON_TYPE_NONE, 0};
 button_controller_t buttons[BUTTON_COUNT];
@@ -38,14 +40,15 @@ led_manager_t led_manager;
 
 static bool lcd_ready = false;
 
-void Main_Setup()
+void Main_Setup()//ÑÓ³ÙÊ¹ÓÃ HAL_Delay
 {
+    // printf("Main_Setup\r\n");
     plot_test_config_t plot_config = {
         .send = InterfaceUsb_CdcSend,
         .user = NULL,
         .channel_count = PLOT_TEST_DEFAULT_CHANNELS,
         .interval_ms = PLOT_TEST_DEFAULT_INTERVAL_MS,
-        .auto_start = true,
+        .auto_start = false,
     };
 
     InterfaceUsb_Init();
@@ -62,7 +65,7 @@ void Main_Setup()
         touch_config.width = TftLcd_GetWidth();
         touch_config.height = TftLcd_GetHeight();
         (void)TouchScreen_Init(&touch_config);
-        (void)TouchCalibration_RunBlocking();
+        // (void)TouchCalibration_RunBlocking();
     }
     else
     {
@@ -88,15 +91,21 @@ void Main_Setup()
 }
 
 void Start_Task_Main(void* argument)
-{
-    touch_screen_state_t touch_state;
+{    touch_screen_state_t touch_state;
+
+    if (lcd_ready)
+    {
+        (void)SdImageViewer_Init();
+    }
 
     for (;;)
     {
         InterfaceUsb_TaskTick();
         PlotTest_TaskTick(HAL_GetTick());
+        ImageViewer_PollNavButtons();
+        SdImageViewer_TaskTick();
 
-        if (lcd_ready && TouchScreen_Scan(&touch_state) && touch_state.pressed)
+        if (lcd_ready && !SdImageViewer_IsActive() && TouchScreen_Scan(&touch_state) && touch_state.pressed)
         {
             TftLcd_DrawPixel(touch_state.x[0], touch_state.y[0], TFT_LCD_COLOR_RED);
             TftLcd_DrawPixel((uint16_t)(touch_state.x[0] + 1U), touch_state.y[0], TFT_LCD_COLOR_RED);
@@ -118,20 +127,31 @@ void Start_Task_TimerIRQ(void* argument)
 
             if (common_receive_data.button_type == BUTTON_TYPE_CLICK_BUTTON)
             {
-                printf("%s click button\r\n", button_name);
-                HAL_GPIO_TogglePin(LED0_GPIO_Port, LED0_Pin);
+                // printf("%s click button\r\n", button_name);
+                if (common_receive_data.button_id == BUTTON_ID_LEFT)
+                {
+                    HAL_GPIO_TogglePin(LED0_GPIO_Port, LED0_Pin);
+                }
+                else if (common_receive_data.button_id == BUTTON_ID_RIGHT)
+                {
+                    HAL_GPIO_TogglePin(LED0_GPIO_Port, LED0_Pin);
+                }
+                else
+                {
+                    HAL_GPIO_TogglePin(LED0_GPIO_Port, LED0_Pin);
+                }
             }
             else if (common_receive_data.button_type == BUTTON_TYPE_LONG_PRESS_BUTTON)
             {
-                printf("%s long button\r\n", button_name);
+                // printf("%s long button\r\n", button_name);
             }
             else if (common_receive_data.button_type == BUTTON_TYPE_DOUBLE_CLICK_BUTTON)
             {
-                printf("%s double button\r\n", button_name);
+                // printf("%s double button\r\n", button_name);
             }
             else if (common_receive_data.button_type == BUTTON_TYPE_MULTI_CLICK_BUTTON)
             {
-                printf("%s multi click button: %d\r\n", button_name, common_receive_data.button_click_count);
+                // printf("%s multi click button: %d\r\n", button_name, common_receive_data.button_click_count);
             }
         }
         vTaskDelay(10);
@@ -167,6 +187,43 @@ static const char* Button_GetName(button_id_e button_id)
     default:
         return "UNKNOWN";
     }
+}
+
+static void ImageViewer_PollNavButtons(void)
+{
+    static bool left_was_pressed = false;
+    static bool right_was_pressed = false;
+    static uint32_t last_nav_tick = 0U;
+
+    if (!SdImageViewer_IsActive())
+    {
+        left_was_pressed = false;
+        right_was_pressed = false;
+        return;
+    }
+
+    bool left_pressed = (HAL_GPIO_ReadPin(KEY_LEFT_GPIO_Port, KEY_LEFT_Pin) == GPIO_PIN_RESET);
+    bool right_pressed = (HAL_GPIO_ReadPin(KEY_RIGHT_GPIO_Port, KEY_RIGHT_Pin) == GPIO_PIN_RESET);
+    uint32_t now = HAL_GetTick();
+
+    if ((now - last_nav_tick) >= 250U)
+    {
+        if (left_pressed && !left_was_pressed)
+        {
+            HAL_GPIO_TogglePin(LED0_GPIO_Port, LED0_Pin);
+            SdImageViewer_RequestPrevious();
+            last_nav_tick = now;
+        }
+        else if (right_pressed && !right_was_pressed)
+        {
+            HAL_GPIO_TogglePin(LED0_GPIO_Port, LED0_Pin);
+            SdImageViewer_RequestNext();
+            last_nav_tick = now;
+        }
+    }
+
+    left_was_pressed = left_pressed;
+    right_was_pressed = right_pressed;
 }
 
 static void Button_SendEventFromISR(const button_send_data_t* event)

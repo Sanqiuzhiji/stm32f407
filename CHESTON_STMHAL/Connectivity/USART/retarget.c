@@ -35,7 +35,12 @@ int _write(const int fd, const char* ptr, const int len)
 {
     if (fd == STDOUT_FILENO || fd == STDERR_FILENO)
     {
-        HAL_UART_Transmit(gHuart, (uint8_t*)ptr, len, HAL_MAX_DELAY);
+        if (gHuart == NULL)
+        {
+            return len;
+        }
+
+        (void)HAL_UART_Transmit(gHuart, (uint8_t*)ptr, len, 20);
         return len;
     }
     return -1;

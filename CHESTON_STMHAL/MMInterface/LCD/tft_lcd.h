@@ -20,6 +20,7 @@ void TftLcd_Backlight(bool enabled);
 void TftLcd_Clear(uint16_t color);
 void TftLcd_DrawPixel(uint16_t x, uint16_t y, uint16_t color);
 void TftLcd_DrawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color);
+void TftLcd_DrawRgb565Line(uint16_t x, uint16_t y, const uint16_t* pixels, uint16_t count);
 uint16_t TftLcd_ReadId(void);
 uint16_t TftLcd_GetWidth(void);
 uint16_t TftLcd_GetHeight(void);

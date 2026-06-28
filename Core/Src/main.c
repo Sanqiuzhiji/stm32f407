@@ -20,7 +20,9 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "dma.h"
+#include "fatfs.h"
 #include "rtc.h"
+#include "sdio.h"
 #include "tim.h"
 #include "usart.h"
 #include "usb_device.h"
@@ -104,6 +106,8 @@ int main(void)
   MX_TIM7_Init();
   MX_RTC_Init();
   MX_FSMC_Init();
+  MX_SDIO_SD_Init();
+  MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
 
     Main_Setup();

@@ -128,6 +128,25 @@ void TftLcd_DrawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_
     }
 }
 
+void TftLcd_DrawRgb565Line(uint16_t x, uint16_t y, const uint16_t* pixels, uint16_t count)
+{
+    if (pixels == NULL || count == 0U || x >= TFT_LCD_WIDTH || y >= TFT_LCD_HEIGHT)
+    {
+        return;
+    }
+
+    if ((uint32_t)x + count > TFT_LCD_WIDTH)
+    {
+        count = (uint16_t)(TFT_LCD_WIDTH - x);
+    }
+
+    lcd_set_window(x, y, (uint16_t)(x + count - 1U), y);
+
+    for (uint16_t i = 0U; i < count; i++)
+    {
+        lcd_write_data(pixels[i]);
+    }
+}
 uint16_t TftLcd_ReadId(void)
 {
     return lcd_id;
