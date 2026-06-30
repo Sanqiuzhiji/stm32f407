@@ -1,4 +1,4 @@
-#include "USB/interface_usb.h"
+#include "Connectivity/USB/interface_usb.h"
 
 #include "usbd_cdc_if.h"
 

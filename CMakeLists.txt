@@ -51,15 +51,6 @@ endif ()
 
 include_directories(Core/Inc Drivers/STM32F4xx_HAL_Driver/Inc Drivers/STM32F4xx_HAL_Driver/Inc/Legacy Drivers/CMSIS/Device/ST/STM32F4xx/Include Drivers/CMSIS/Include Middlewares/Third_Party/FreeRTOS/Source/include Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F USB_DEVICE/App USB_DEVICE/Target Middlewares/ST/STM32_USB_Device_Library/Core/Inc Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc FATFS/Target FATFS/App Middlewares/Third_Party/FatFs/src
 CHESTON_STMHAL
-CHESTON_STMHAL/Connectivity
-CHESTON_STMHAL/Connectivity/USART
-CHESTON_STMHAL/Memory
-CHESTON_STMHAL/MMInterface
-CHESTON_STMHAL/MMInterface/Monitor
-CHESTON_STMHAL/MMInterface/Led
-CHESTON_STMHAL/MMInterface/Button
-CHESTON_STMHAL/Peripheral
-CHESTON_STMHAL/Peripheral/Algorithm
 )
 add_definitions(-DDEBUG -DUSE_HAL_DRIVER -DSTM32F407xx)
 

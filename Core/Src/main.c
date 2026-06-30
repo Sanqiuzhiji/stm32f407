@@ -33,7 +33,7 @@
 /* USER CODE BEGIN Includes */
 
 #include "main_link.h"
-#include "Remote/remote.h"
+#include "MMInterface/Remote/remote.h"
 
 /* USER CODE END Includes */
 

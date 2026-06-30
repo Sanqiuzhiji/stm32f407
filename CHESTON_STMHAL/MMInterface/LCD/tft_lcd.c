@@ -1,4 +1,4 @@
-#include "tft_lcd.h"
+#include "MMInterface/LCD/tft_lcd.h"
 
 #include "main.h"
 

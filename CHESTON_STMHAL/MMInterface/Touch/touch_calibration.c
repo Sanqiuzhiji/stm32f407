@@ -1,11 +1,11 @@
-#include "touch_calibration.h"
+#include "MMInterface/Touch/touch_calibration.h"
 
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "LCD/tft_lcd.h"
-#include "Touch/touch_screen.h"
+#include "MMInterface/LCD/tft_lcd.h"
+#include "MMInterface/Touch/touch_screen.h"
 
 #define CAL_POINT_COUNT 5U
 #define CAL_MARGIN 20U

@@ -1,7 +1,7 @@
 #include "App/SdImageViewer/sd_image_viewer.h"
 
 #include "fatfs.h"
-#include "LCD/tft_lcd.h"
+#include "MMInterface/LCD/tft_lcd.h"
 
 #include <stdint.h>
 #include <stdio.h>

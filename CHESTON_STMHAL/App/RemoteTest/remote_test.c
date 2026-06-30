@@ -1,7 +1,7 @@
 #include "App/RemoteTest/remote_test.h"
 
-#include "LCD/tft_lcd.h"
-#include "Remote/remote.h"
+#include "MMInterface/LCD/tft_lcd.h"
+#include "MMInterface/Remote/remote.h"
 
 #include <stdio.h>
 

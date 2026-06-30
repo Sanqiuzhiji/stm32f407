@@ -1,6 +1,6 @@
 #include "App/PlotTest/plot_test.h"
 
-#include "Protocol/justfloat_protocol.h"
+#include "Connectivity/Protocol/justfloat_protocol.h"
 
 #include <stdio.h>
 #include <string.h>

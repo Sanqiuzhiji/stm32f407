@@ -50,15 +50,6 @@ endif ()
 
 include_directories(${includes}
 CHESTON_STMHAL
-CHESTON_STMHAL/Connectivity
-CHESTON_STMHAL/Connectivity/USART
-CHESTON_STMHAL/Memory
-CHESTON_STMHAL/MMInterface
-CHESTON_STMHAL/MMInterface/Monitor
-CHESTON_STMHAL/MMInterface/Led
-CHESTON_STMHAL/MMInterface/Button
-CHESTON_STMHAL/Peripheral
-CHESTON_STMHAL/Peripheral/Algorithm
 )
 add_definitions(${defines})
 

@@ -26,7 +26,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
-#include "Button_Controller.h"
+#include "MMInterface/Button/Button_Controller.h"
 
 /* USER CODE END Includes */
 
